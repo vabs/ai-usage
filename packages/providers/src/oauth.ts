@@ -2,13 +2,16 @@ import { createHash, randomBytes } from "node:crypto";
 import { ProviderError } from "./http";
 import type { PendingAuth } from "./types";
 
-/** PKCE verifier/challenge plus an anti-CSRF state value. */
+/**
+ * PKCE verifier/challenge plus an anti-CSRF state value, both from 32 random bytes (43 chars).
+ * claude.ai rejects shorter state values with "Invalid request format".
+ */
 export function createPkce(): PendingAuth & { challenge: string } {
   const verifier = randomBytes(32).toString("base64url");
   return {
     verifier,
     challenge: createHash("sha256").update(verifier).digest("base64url"),
-    state: randomBytes(16).toString("base64url"),
+    state: randomBytes(32).toString("base64url"),
   };
 }
 

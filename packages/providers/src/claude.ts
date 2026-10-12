@@ -83,6 +83,7 @@ export const claude: ProviderAdapter = {
   startAuth() {
     const { verifier, challenge, state } = createPkce();
     const url = new URL(AUTHORIZE_URL);
+    // URLSearchParams writes spaces as "+"; send the scope separator as %20 like other working clients.
     url.search = new URLSearchParams({
       code: "true",
       client_id: CLIENT_ID,
@@ -92,7 +93,7 @@ export const claude: ProviderAdapter = {
       code_challenge: challenge,
       code_challenge_method: "S256",
       state,
-    }).toString();
+    }).toString().replace(/\+/g, "%20");
     return { url: url.toString(), verifier, state };
   },
 

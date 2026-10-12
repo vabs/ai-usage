@@ -12,6 +12,9 @@ describe("createPkce", () => {
     const { verifier, challenge, state } = createPkce();
     expect(challenge).toBe(createHash("sha256").update(verifier).digest("base64url"));
     expect(state).not.toBe(verifier);
+    // claude.ai rejects state values shorter than Claude Code's 43 characters.
+    expect(state).toHaveLength(43);
+    expect(verifier).toHaveLength(43);
   });
 });
 
