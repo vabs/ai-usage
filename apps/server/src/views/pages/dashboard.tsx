@@ -1,19 +1,27 @@
 import { PROVIDER_NAMES, PROVIDERS } from "@app/shared";
 import type { AccountWithWindows } from "../../lib/accounts";
-import { AccountCard } from "../components/account-card";
+import { AccountPanel } from "../components/account-panel";
+import { AccountTab } from "../components/account-tab";
 import { Layout } from "../layout";
 
-export function AccountList({ accounts }: { accounts: AccountWithWindows[] }) {
+/** Tab strip plus one panel per account. Renders nothing when there are no accounts (see .empty-state). */
+export function AccountList({ accounts, selectedId }: { accounts: AccountWithWindows[]; selectedId: number | null }) {
+  if (accounts.length === 0) return <></>;
   return (
     <>
+      <div class="tabs" role="tablist" aria-label="Connected accounts">
+        {accounts.map((account) => (
+          <AccountTab account={account} selected={account.id === selectedId} />
+        ))}
+      </div>
       {accounts.map((account) => (
-        <AccountCard account={account} />
+        <AccountPanel account={account} selected={account.id === selectedId} />
       ))}
     </>
   );
 }
 
-export function DashboardPage({ accounts }: { accounts: AccountWithWindows[] }) {
+export function DashboardPage({ accounts, selectedId }: { accounts: AccountWithWindows[]; selectedId: number | null }) {
   return (
     <Layout>
       <section class="toolbar">
@@ -25,9 +33,9 @@ export function DashboardPage({ accounts }: { accounts: AccountWithWindows[] }) 
         ) : null}
       </section>
 
-      <ul id="account-list" class="cards">
-        <AccountList accounts={accounts} />
-      </ul>
+      <div id="account-list" class="accounts">
+        <AccountList accounts={accounts} selectedId={selectedId} />
+      </div>
       <p class="empty-state">No accounts connected yet. Connect one below.</p>
 
       <section class="connect">

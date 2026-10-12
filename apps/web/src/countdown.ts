@@ -1,8 +1,8 @@
 import { formatAge, formatCountdown } from "@app/shared/format";
 
 /**
- * Ticks reset countdowns and "updated Xm ago" labels every second, and flags cards whose
- * data is older than the server's staleness threshold. The server renders the same text
+ * Ticks reset countdowns and "updated Xm ago" labels every second, and flags tabs and panels
+ * whose data is older than the server's staleness threshold. The server renders the same text
  * first (same formatters), so nothing jumps when this takes over.
  */
 function tick() {
@@ -13,10 +13,12 @@ function tick() {
   }
 
   for (const el of document.querySelectorAll<HTMLTimeElement>("time[data-age]")) {
-    const age = now - Date.parse(el.dateTime);
-    el.textContent = formatAge(age);
-    const card = el.closest<HTMLElement>("[data-stale-after]");
-    if (card) card.classList.toggle("is-stale", age > Number(card.dataset.staleAfter));
+    el.textContent = formatAge(now - Date.parse(el.dateTime));
+  }
+
+  // Never-collected accounts have no data-updated-at; the server already marked them stale.
+  for (const el of document.querySelectorAll<HTMLElement>("[data-stale-after][data-updated-at]")) {
+    el.classList.toggle("is-stale", now - Date.parse(el.dataset.updatedAt!) > Number(el.dataset.staleAfter));
   }
 }
 

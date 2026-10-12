@@ -5,6 +5,8 @@
 
 :root {
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Rounded numerals read like an instrument dial. Falls back to the UI face elsewhere. */
+  --font-gauge: ui-rounded, "SF Pro Rounded", "Nunito", var(--font-sans);
 
   --bg: #f5f6f8;
   --surface: #ffffff;
@@ -19,7 +21,7 @@
 
   --radius-sm: 4px;
   --radius-md: 8px;
-  --measure: 40rem;
+  --measure: 58rem;
   --step--1: 0.875rem;
   --step-0: 1rem;
   --step-1: 1.25rem;
@@ -203,87 +205,11 @@ button.button--danger {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .toolbar h1 {
   margin: 0;
-}
-
-.cards {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 1rem;
-}
-
-.card {
-  padding: 1.1rem 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-}
-
-.card.is-stale .windows {
-  opacity: 0.55;
-}
-
-.card.is-stale .status--age {
-  color: var(--warn);
-}
-
-.card__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  gap: 1rem;
-}
-
-.card__title {
-  margin: 0;
-  font-size: var(--step-1);
-}
-
-.card__label {
-  color: var(--muted);
-  font-weight: 400;
-  overflow-wrap: anywhere;
-}
-
-.card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.75rem;
-  margin: 0.3rem 0 0;
-  color: var(--muted);
-  font-size: var(--step--1);
-}
-
-.card__actions {
-  display: flex;
-  gap: 0.4rem;
-  align-items: start;
-}
-
-.card__actions button,
-.menu summary {
-  padding: 0.35rem 0.7rem;
-  font-size: var(--step--1);
-}
-
-.card__error {
-  margin: 0.75rem 0 0;
-  padding: 0.5rem 0.75rem;
-  border-left: 3px solid var(--danger);
-  color: var(--danger);
-  font-size: var(--step--1);
-  overflow-wrap: anywhere;
-}
-
-.card__empty {
-  margin: 0.75rem 0 0;
-  color: var(--muted);
 }
 
 .tag {
@@ -291,6 +217,12 @@ button.button--danger {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   text-transform: capitalize;
+}
+
+.tag--banked {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-transform: none;
 }
 
 .provider--claude {
@@ -301,6 +233,234 @@ button.button--danger {
 }
 .provider--gemini {
   color: #3b78e7;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * Tab strip: one gauge per account. The open tab sits on the panel's top border and covers it,
+ * so tab and panel read as one surface. The strip scrolls sideways when tabs don't fit.
+ */
+
+.tabs {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(12rem, 1fr);
+  gap: 0.5rem;
+  /* Overlap the panel border by 1px; the open tab drops into that row. */
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.tab {
+  position: relative;
+  scroll-snap-align: start;
+  display: grid;
+  align-content: start;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.75rem 1rem 0.85rem;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab:focus-visible {
+  outline-offset: -3px;
+}
+
+.tab[aria-selected="true"] {
+  top: 1px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.tab__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.tab__label,
+.tab__window {
+  overflow: hidden;
+  font-size: var(--step--1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab__reading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  margin-top: 0.35rem;
+  font-family: var(--font-gauge);
+  font-variant-numeric: tabular-nums;
+}
+
+.tab__pct {
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.tab__unit {
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+.tab__reading--none {
+  min-height: 2.6rem;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* Colour only speaks up when something is running low. */
+.tab--low .tab__pct {
+  color: var(--warn);
+}
+.tab--critical .tab__pct {
+  color: var(--danger);
+}
+
+.tab__fuel {
+  height: 0.3rem;
+  margin: 0.4rem 0 0.2rem;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.tab__fuel > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ok);
+}
+
+.tab--low .tab__fuel > span {
+  background: var(--warn);
+}
+.tab--critical .tab__fuel > span {
+  background: var(--danger);
+}
+
+.tab.is-stale .tab__reading,
+.tab.is-stale .tab__fuel {
+  opacity: 0.5;
+}
+
+.tab__status {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: auto;
+  border-radius: 50%;
+}
+
+.tab__status--refreshing {
+  background: var(--warn);
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+.tab__status--error {
+  background: var(--danger);
+}
+.tab__status--stale {
+  border: 2px solid var(--muted);
+}
+
+/* Panel: the open account in detail. */
+
+.panel {
+  padding: 1.1rem 1.25rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--surface);
+}
+
+.panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+}
+
+.panel__title h2 {
+  margin: 0;
+  font-size: var(--step-1);
+}
+
+.panel__label {
+  color: var(--muted);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.panel__actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: start;
+}
+
+.panel__actions button,
+.menu summary {
+  padding: 0.35rem 0.7rem;
+  font-size: var(--step--1);
+}
+
+.panel__error {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+
+.panel__empty {
+  margin: 1rem 0 0.6rem;
+  color: var(--muted);
+}
+
+.panel.is-stale .meters {
+  opacity: 0.55;
+}
+
+.panel.is-stale .status--age {
+  color: var(--warn);
 }
 
 /* Overflow menu built on <details>: no JS needed. */
@@ -340,47 +500,51 @@ button.button--danger {
   padding: 0.3rem 0.4rem;
 }
 
-/* Usage windows */
+/* Meters: one slim row per window, or per group of windows that read the same. */
 
-.windows {
+.meters {
   list-style: none;
-  margin: 1rem 0 0;
+  margin: 0.9rem 0 0;
   padding: 0;
+}
+
+.meter {
   display: grid;
-  gap: 0.85rem;
-}
-
-.window__head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  grid-template-columns: minmax(8rem, 18rem) minmax(6rem, 1fr) 5.5rem 8.5rem;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--line);
   font-size: var(--step--1);
 }
 
-.window__label {
+.meter__label {
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
-.window__pct {
-  font-variant-numeric: tabular-nums;
+.meter__label--group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
-.window__reset {
-  margin-top: 0.2rem;
-  color: var(--muted);
-  font-size: var(--step--1);
-  font-variant-numeric: tabular-nums;
+.chip {
+  padding: 0 0.4em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.bar {
+.meter__bar {
   height: 0.5rem;
-  margin-top: 0.3rem;
   border-radius: 999px;
   background: var(--line);
   overflow: hidden;
 }
 
-.bar__fill {
+.meter__fill {
   display: block;
   height: 100%;
   border-radius: inherit;
@@ -388,11 +552,32 @@ button.button--danger {
   transition: width 0.4s ease;
 }
 
-.bar--mid .bar__fill {
+.meter--low .meter__fill {
   background: var(--warn);
 }
-.bar--high .bar__fill {
+.meter--critical .meter__fill {
   background: var(--danger);
+}
+
+.meter__pct {
+  font-family: var(--font-gauge);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.meter--low .meter__pct {
+  color: var(--warn);
+}
+.meter--critical .meter__pct {
+  color: var(--danger);
+}
+
+.meter__reset {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .status::before {
@@ -424,12 +609,12 @@ button.button--danger {
   }
 }
 
-/* Shown only while the list is empty (works after htmx inserts or removes items). */
+/* Shown only while there are no accounts (works after htmx inserts or removes them). */
 .empty-state {
   padding-block: 1.5rem;
   color: var(--muted);
 }
-.cards:not(:empty) + .empty-state {
+.accounts:not(:empty) + .empty-state {
   display: none;
 }
 
@@ -446,6 +631,7 @@ button.button--danger {
 }
 
 .connect__intro {
+  max-width: 60ch;
   color: var(--muted);
 }
 
@@ -508,9 +694,35 @@ button.button--danger {
   transform: translateY(0.5rem);
 }
 
-@media (max-width: 34rem) {
-  .card__head {
+@media (max-width: 40rem) {
+  .tabs {
+    grid-auto-columns: minmax(9.5rem, 1fr);
+  }
+  .tab {
+    padding: 0.6rem 0.75rem 0.7rem;
+  }
+  .tab__pct {
+    font-size: 2.1rem;
+  }
+  .panel {
+    padding-inline: 1rem;
+  }
+  .panel__head {
     flex-direction: column;
+  }
+  /* Label and reading on one line, the bar and reset time under them. */
+  .meter {
+    grid-template-columns: 1fr auto;
+  }
+  .meter__pct {
+    grid-area: 1 / 2;
+  }
+  .meter__bar {
+    grid-area: 2 / 1 / 3 / -1;
+  }
+  .meter__reset {
+    grid-area: 3 / 1 / 4 / -1;
+    text-align: left;
   }
 }
 

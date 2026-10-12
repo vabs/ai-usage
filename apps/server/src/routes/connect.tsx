@@ -114,7 +114,8 @@ connectRouter.post("/:provider", async (req, res) => {
   await db.pendingAuth.delete({ where: { state: pending.state } });
 
   await requestCollect(account.id);
-  if (!req.htmx.isHtmx) return res.redirect(303, "/");
-  res.hx.redirect("/");
+  const dashboard = `/?account=${account.id}`;
+  if (!req.htmx.isHtmx) return res.redirect(303, dashboard);
+  res.hx.redirect(dashboard);
   res.status(204).end();
 });

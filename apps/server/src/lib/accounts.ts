@@ -1,4 +1,5 @@
 import { type Account, db, type UsageWindow } from "@app/db";
+import type { Request } from "express";
 import { env } from "../config";
 import { notFound } from "./http-error";
 
@@ -27,6 +28,80 @@ export const isInFlight = (a: Account, now = Date.now()) =>
   a.status !== "idle" && now - a.updatedAt.getTime() < IN_FLIGHT_TIMEOUT_MS;
 
 export const isStale = (a: Account, now = Date.now()) => !a.lastOkAt || now - a.lastOkAt.getTime() > STALE_AFTER_MS;
+
+/** Share of a window still available, 0 to 100. The dashboard speaks in "left", like a fuel gauge. */
+export const remainingPct = (usedPct: number) => Math.max(0, Math.min(100, 100 - usedPct));
+
+export type Level = "ok" | "low" | "critical";
+export const levelOf = (remaining: number): Level => (remaining <= 10 ? "critical" : remaining <= 30 ? "low" : "ok");
+
+/** Most used first; on a tie, the one that resets later binds longer. */
+const byTightness = (a: Pick<UsageWindow, "usedPct" | "resetsAt">, b: Pick<UsageWindow, "usedPct" | "resetsAt">) =>
+  b.usedPct - a.usedPct || (b.resetsAt?.getTime() ?? 0) - (a.resetsAt?.getTime() ?? 0);
+
+/** The window closest to its limit: the account's headline number. */
+export const tightestWindow = (windows: UsageWindow[]) => [...windows].sort(byTightness)[0] ?? null;
+
+export type WindowGroup = { labels: string[]; usedPct: number; resetsAt: Date | null };
+
+/** Resets this close together count as the same reset (vendors stagger per-model quotas by minutes). */
+const SAME_RESET_MS = 15 * 60_000;
+
+/**
+ * Collapses windows that read the same (equal rounded usage, same reset) into one row, so a provider
+ * with a dozen near-identical per-model quotas shows as a few lines. Tightest group first.
+ */
+export function groupWindows(windows: UsageWindow[]): WindowGroup[] {
+  const groups: WindowGroup[] = [];
+  for (const w of [...windows].sort(byTightness)) {
+    const match = groups.find(
+      (g) =>
+        Math.round(g.usedPct) === Math.round(w.usedPct) &&
+        (g.resetsAt && w.resetsAt
+          ? Math.abs(g.resetsAt.getTime() - w.resetsAt.getTime()) <= SAME_RESET_MS
+          : g.resetsAt === w.resetsAt),
+    );
+    if (match) match.labels.push(w.label);
+    else groups.push({ labels: [w.label], usedPct: w.usedPct, resetsAt: w.resetsAt });
+  }
+  return groups;
+}
+
+const positiveInt = (raw: unknown) => {
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
+
+/**
+ * The account tab the viewer has open: ?account= on a page load, or the same parameter in
+ * HX-Current-URL for htmx fragments (the browser script keeps it in the address bar).
+ */
+export function requestedAccountId(req: Request): number | null {
+  const fromQuery = positiveInt(req.query.account);
+  if (fromQuery) return fromQuery;
+  const current = req.get("HX-Current-URL");
+  if (!current) return null;
+  try {
+    return positiveInt(new URL(current).searchParams.get("account"));
+  } catch {
+    return null;
+  }
+}
+
+/** The requested account if it still exists, otherwise the first one in list order. */
+export function selectedAccountId(accounts: Pick<Account, "id">[], requested: number | null): number | null {
+  if (requested && accounts.some((a) => a.id === requested)) return requested;
+  return accounts[0]?.id ?? null;
+}
+
+/** Selection for a single-account fragment, without loading every account. */
+export async function isSelected(req: Request, accountId: number): Promise<boolean> {
+  const requested = requestedAccountId(req);
+  if (requested === accountId) return true;
+  if (requested && (await db.account.count({ where: { id: requested } }))) return false;
+  const first = await db.account.findFirst({ orderBy: [{ provider: "asc" }, { createdAt: "asc" }], select: { id: true } });
+  return first?.id === accountId;
+}
 
 /** The /api/usage shape. Never includes credentials or raw responses. */
 export function toApi(a: AccountWithWindows, now = Date.now()) {
