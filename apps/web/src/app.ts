@@ -1,6 +1,7 @@
 import htmx from "htmx.org";
 import "./countdown";
-import "./tabs";
+import "./dialog";
+import "./rows";
 import "./toasts";
 
 declare global {

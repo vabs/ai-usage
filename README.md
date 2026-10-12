@@ -44,7 +44,7 @@ Open http://127.0.0.1:3000. Basic auth is off in development unless `DASHBOARD_P
 
 ## Connecting your accounts
 
-Click **+ Claude**, **+ Codex** or **+ Gemini** on the dashboard. Each one has two steps:
+Click **+ Connect account** in the header and pick Claude, Codex or Gemini. Each one has two steps:
 
 1. **Open sign-in.** The vendor's own login page opens in a new tab. Sign in with the account your
    CLI uses and approve.
@@ -56,7 +56,7 @@ What you copy differs per vendor:
 | --- | --- |
 | Claude | Anthropic shows a code page. Copy the whole code (it contains a `#`). |
 | Codex | The browser goes to `http://127.0.0.1:1455/auth/callback?code=…` and fails to load. That's expected. Copy the full URL from the address bar. |
-| Gemini | Google shows an authorization code. Copy it. For a new Google account, run `gemini` once first so Code Assist is set up. Workspace accounts (and Code Assist Standard/Enterprise) also need the **Google Cloud project ID**, the same one gemini uses as `GOOGLE_CLOUD_PROJECT`. Enter it on the connect page, or set `GOOGLE_CLOUD_PROJECT` on the server. |
+| Gemini | Google shows an authorization code. Copy it. For a new Google account, run `gemini` once first so Code Assist is set up. Workspace accounts (and Code Assist Standard/Enterprise) also need the **Google Cloud project ID**, the same one gemini uses as `GOOGLE_CLOUD_PROJECT`. Enter it in the connect form, or set `GOOGLE_CLOUD_PROJECT` on the server. |
 
 Gemini needs one extra setup step: set `GEMINI_OAUTH_CLIENT_ID` and `GEMINI_OAUTH_CLIENT_SECRET` in
 `.env`. They are the Gemini CLI's public OAuth client values, in
@@ -64,10 +64,13 @@ Gemini needs one extra setup step: set `GEMINI_OAUTH_CLIENT_ID` and `GEMINI_OAUT
 They come from the environment rather than the code so that GitHub's secret scanning doesn't block pushes.
 
 The account's email becomes the label unless you name it. You can connect several accounts per
-vendor. Each card's ⋯ menu has **Reconnect**, **Raw response** and **Disconnect**.
+vendor. Each account is a row showing how much is left of its tightest limit; open it for every
+limit. Rows that need you (10% or less left, or an expired sign-in) start open, and the dashboard
+remembers which rows you opened or closed. Each row's ⋯ menu has **Reconnect**, **Raw response**
+and **Disconnect**.
 
-**Refresh** on a card, or **Refresh all**, queues an immediate collection. The card shows
-"Refreshing…" and updates itself when the worker finishes. Scripts can call
+**Refresh** in a row, or **Refresh all**, queues an immediate collection. The row shows
+"Refreshing" and updates itself when the worker finishes. Scripts can call
 `POST /api/refresh` and then `GET /api/usage`.
 
 ## API

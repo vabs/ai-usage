@@ -1,7 +1,7 @@
 import { formatAge, formatCountdown } from "@app/shared/format";
 
 /**
- * Ticks reset countdowns and "updated Xm ago" labels every second, and flags tabs and panels
+ * Ticks reset countdowns and "updated Xm ago" labels every second, and flags account rows
  * whose data is older than the server's staleness threshold. The server renders the same text
  * first (same formatters), so nothing jumps when this takes over.
  */

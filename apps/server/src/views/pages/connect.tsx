@@ -81,34 +81,67 @@ export function ConnectForm({
           {error}
         </p>
       ) : null}
-      <button type="submit">{reconnecting ? "Reconnect" : "Connect"}</button>
+      <div class="form-foot">
+        {/* Only shown in the connect dialog: back to the provider list, or closes it when reconnecting. */}
+        <button type="button" class="button--quiet" data-connect-back={reconnecting ? "close" : "pick"}>
+          {reconnecting ? "Cancel" : "Back"}
+        </button>
+        <button type="submit">{reconnecting ? "Reconnect" : "Connect"}</button>
+      </div>
     </form>
   );
 }
 
 type ConnectPageProps = Omit<ConnectFormProps, "error" | "pasted"> & { authUrl: string };
 
-export function ConnectPage({ authUrl, ...form }: ConnectPageProps) {
-  const name = PROVIDER_NAMES[form.provider];
+const headingOf = ({ provider, reconnecting }: ConnectPageProps) =>
+  `${reconnecting ? "Reconnect" : "Connect"} ${PROVIDER_NAMES[provider]}`;
+
+const introOf = ({ provider }: ConnectPageProps) => {
+  const name = PROVIDER_NAMES[provider];
+  return `You sign in on ${name}'s own page. This app never sees your password; it receives tokens that can read your usage, stores them encrypted, and refreshes them on its own.`;
+};
+
+function ConnectSteps({ authUrl, ...form }: ConnectPageProps) {
   return (
-    <Layout title={`Connect ${name}`}>
+    <ol class="steps">
+      <li>
+        <p class="step-title">1. Sign in</p>
+        <a class="button" href={authUrl} target="_blank" rel="noopener noreferrer" safe>
+          {`Open ${PROVIDER_NAMES[form.provider]} sign-in`}
+        </a>
+      </li>
+      <li>
+        <ConnectForm {...form} />
+      </li>
+    </ol>
+  );
+}
+
+/** The same steps for the dashboard's connect dialog. Swaps the dialog title out-of-band. */
+export function ConnectStep(props: ConnectPageProps) {
+  return (
+    <>
+      <h2 id="connect-title" hx-swap-oob="true" safe>
+        {headingOf(props)}
+      </h2>
+      <p class="modal__intro" safe>
+        {introOf(props)}
+      </p>
+      <ConnectSteps {...props} />
+    </>
+  );
+}
+
+export function ConnectPage(props: ConnectPageProps) {
+  const heading = headingOf(props);
+  return (
+    <Layout title={heading}>
       <section class="intro">
-        <h1 safe>{`${form.reconnecting ? "Reconnect" : "Connect"} ${name}`}</h1>
-        <p safe>
-          {`You sign in on ${name}'s own page. This app never sees your password; it receives tokens that can read your usage, stores them encrypted, and refreshes them on its own.`}
-        </p>
+        <h1 safe>{heading}</h1>
+        <p safe>{introOf(props)}</p>
       </section>
-      <ol class="steps">
-        <li>
-          <p class="step-title">1. Sign in</p>
-          <a class="button" href={authUrl} target="_blank" rel="noopener noreferrer" safe>
-            {`Open ${name} sign-in`}
-          </a>
-        </li>
-        <li>
-          <ConnectForm {...form} />
-        </li>
-      </ol>
+      <ConnectSteps {...props} />
       <p>
         <a href="/">Cancel</a>
       </p>

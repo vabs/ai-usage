@@ -67,40 +67,55 @@ export function groupWindows(windows: UsageWindow[]): WindowGroup[] {
   return groups;
 }
 
-const positiveInt = (raw: unknown) => {
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : null;
-};
+/** A row that should open without being asked: its sign-in expired or it is nearly out. */
+export function needsAttention(a: AccountWithWindows): boolean {
+  if (a.lastErrorKind === "auth") return true;
+  const tight = tightestWindow(a.windows);
+  return tight !== null && levelOf(remainingPct(tight.usedPct)) === "critical";
+}
 
 /**
- * The account tab the viewer has open: ?account= on a page load, or the same parameter in
- * HX-Current-URL for htmx fragments (the browser script keeps it in the address bar).
+ * Rows the viewer opened or closed by hand, from the cookie the browser script keeps
+ * ("3,-5" = account 3 open, account 5 closed). The server reads it so rows render in place
+ * without a jump on load.
  */
-export function requestedAccountId(req: Request): number | null {
-  const fromQuery = positiveInt(req.query.account);
-  if (fromQuery) return fromQuery;
-  const current = req.get("HX-Current-URL");
-  if (!current) return null;
+export const ROWS_COOKIE = "rows";
+
+function rowChoices(req: Request): Map<number, boolean> {
+  const choices = new Map<number, boolean>();
+  const raw = req
+    .get("Cookie")
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${ROWS_COOKIE}=`))
+    ?.slice(ROWS_COOKIE.length + 1);
+  if (!raw) return choices;
+  let decoded: string;
   try {
-    return positiveInt(new URL(current).searchParams.get("account"));
+    decoded = decodeURIComponent(raw);
   } catch {
-    return null;
+    return choices;
   }
+  for (const item of decoded.split(",")) {
+    const n = Number(item);
+    if (Number.isInteger(n) && n !== 0) choices.set(Math.abs(n), n > 0);
+  }
+  return choices;
 }
 
-/** The requested account if it still exists, otherwise the first one in list order. */
-export function selectedAccountId(accounts: Pick<Account, "id">[], requested: number | null): number | null {
-  if (requested && accounts.some((a) => a.id === requested)) return requested;
-  return accounts[0]?.id ?? null;
+/** The account named in ?account= (set after connecting one), which opens regardless. */
+function requestedAccountId(req: Request): number | null {
+  const n = Number(req.query.account);
+  return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-/** Selection for a single-account fragment, without loading every account. */
-export async function isSelected(req: Request, accountId: number): Promise<boolean> {
+/** Which rows render open: the viewer's own choice, otherwise only rows that need attention. */
+export function openAccountIds(accounts: AccountWithWindows[], req: Request): Set<number> {
+  const choices = rowChoices(req);
   const requested = requestedAccountId(req);
-  if (requested === accountId) return true;
-  if (requested && (await db.account.count({ where: { id: requested } }))) return false;
-  const first = await db.account.findFirst({ orderBy: [{ provider: "asc" }, { createdAt: "asc" }], select: { id: true } });
-  return first?.id === accountId;
+  return new Set(
+    accounts.filter((a) => a.id === requested || (choices.get(a.id) ?? needsAttention(a))).map((a) => a.id),
+  );
 }
 
 /** The /api/usage shape. Never includes credentials or raw responses. */

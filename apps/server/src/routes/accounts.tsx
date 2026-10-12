@@ -1,17 +1,17 @@
 import { db } from "@app/db";
 import { Router } from "express";
 import type { Request } from "express";
-import { findAccount, isSelected, listAccounts, requestedAccountId, selectedAccountId } from "../lib/accounts";
+import { findAccount, listAccounts, openAccountIds } from "../lib/accounts";
 import { requestCollect } from "../lib/queue";
-import { AccountFragment } from "../views/components/account-panel";
+import { AccountRowContent } from "../views/components/account-row";
 import { AccountList } from "../views/pages/dashboard";
 
 export const accountsRouter = Router();
 
-/** Tab strip and panels, keeping the viewer's open tab (falls back to the first account). */
+/** Every row, each open or closed as the viewer left it. */
 async function renderList(req: Request) {
   const accounts = await listAccounts();
-  return <AccountList accounts={accounts} selectedId={selectedAccountId(accounts, requestedAccountId(req))} />;
+  return <AccountList accounts={accounts} openIds={openAccountIds(accounts, req)} />;
 }
 
 // Manual refresh of every account. Registered before /:id so "refresh" isn't read as an id.
@@ -24,14 +24,14 @@ accountsRouter.post("/refresh", async (req, res) => {
 
 accountsRouter.get("/:id", async (req, res) => {
   const account = await findAccount(req.params.id);
-  await res.html(<AccountFragment account={account} selected={await isSelected(req, account.id)} />);
+  await res.html(<AccountRowContent account={account} />);
 });
 
 accountsRouter.post("/:id/refresh", async (req, res) => {
   const { id } = await findAccount(req.params.id);
   await requestCollect(id);
   if (!req.htmx.isHtmx) return res.redirect(303, `/?account=${id}`);
-  await res.html(<AccountFragment account={await findAccount(String(id))} selected={await isSelected(req, id)} />);
+  await res.html(<AccountRowContent account={await findAccount(String(id))} />);
 });
 
 /** The vendor's last usage response, verbatim. How you find fields the adapters don't map yet. */
@@ -44,6 +44,6 @@ accountsRouter.delete("/:id", async (req, res) => {
   const account = await findAccount(req.params.id);
   await db.account.delete({ where: { id: account.id } });
   res.hx.trigger("toast", { message: `Disconnected ${account.label}.` });
-  // The whole strip re-renders: the removed tab may have been the open one.
+  // The whole list re-renders so the account count stays right.
   await res.html(await renderList(req));
 });

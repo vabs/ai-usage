@@ -1,36 +1,89 @@
-import { PROVIDER_NAMES, PROVIDERS } from "@app/shared";
+import { type Provider, PROVIDER_NAMES, PROVIDERS } from "@app/shared";
 import { env } from "../../config";
 import type { AccountWithWindows } from "../../lib/accounts";
-import { AccountPanel } from "../components/account-panel";
-import { AccountTab } from "../components/account-tab";
+import { AccountRow } from "../components/account-row";
 import { Layout } from "../layout";
 
-/** Tab strip plus one panel per account. Renders nothing when there are no accounts (see .empty-state). */
-export function AccountList({ accounts, selectedId }: { accounts: AccountWithWindows[]; selectedId: number | null }) {
+/** Count, expand/collapse controls and one row per account. Renders nothing when there are none (see .empty-state). */
+export function AccountList({ accounts, openIds }: { accounts: AccountWithWindows[]; openIds: Set<number> }) {
   if (accounts.length === 0) return <></>;
   return (
     <>
-      <div class="tabs" role="tablist" aria-label="Connected accounts">
+      <div class="list-bar">
+        <span safe>{accounts.length === 1 ? "1 account" : `${accounts.length} accounts`}</span>
+        <span class="list-bar__actions">
+          <button type="button" class="linkish" data-rows="open">
+            Expand all
+          </button>
+          <button type="button" class="linkish" data-rows="close">
+            Collapse all
+          </button>
+        </span>
+      </div>
+      <div class="subs">
         {accounts.map((account) => (
-          <AccountTab account={account} selected={account.id === selectedId} />
+          <AccountRow account={account} open={openIds.has(account.id)} />
         ))}
       </div>
-      {accounts.map((account) => (
-        <AccountPanel account={account} selected={account.id === selectedId} />
-      ))}
     </>
   );
 }
 
-export function DashboardPage({ accounts, selectedId }: { accounts: AccountWithWindows[]; selectedId: number | null }) {
+const CHOICE_HINTS: Record<Provider, string> = {
+  claude: "The Pro, Max, Team or Enterprise login you use with Claude Code",
+  codex: "The ChatGPT login you use with Codex CLI",
+  gemini: "The Google account you use with Gemini CLI",
+};
+
+/**
+ * Provider picker. Choosing one loads its sign-in steps into #connect-step (GET /connect/:provider
+ * answers htmx with just the steps). Without JS the links open the full connect page instead.
+ */
+function ConnectDialog() {
+  return (
+    <dialog id="connect-dialog" class="modal" aria-labelledby="connect-title">
+      <div class="modal__head">
+        <h2 id="connect-title">Connect an account</h2>
+        <button type="button" class="modal__close" aria-label="Close" data-dialog-close>
+          ×
+        </button>
+      </div>
+      <div id="connect-pick" class="modal__step">
+        <p class="modal__intro">
+          Sign in with the account you use for each CLI. This app keeps its own login, so the CLIs stay signed in.
+        </p>
+        <div class="choices">
+          {PROVIDERS.map((p) => (
+            <a class="choice" href={`/connect/${p}`} hx-get={`/connect/${p}`} hx-target="#connect-step" hx-swap="innerHTML">
+              <span class={`choice__name provider--${p}`} safe>
+                {PROVIDER_NAMES[p]}
+              </span>
+              <span class="choice__desc" safe>
+                {CHOICE_HINTS[p]}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+      <div id="connect-step" class="modal__step" hidden></div>
+    </dialog>
+  );
+}
+
+export function DashboardPage({ accounts, openIds }: { accounts: AccountWithWindows[]; openIds: Set<number> }) {
   return (
     <Layout
       actions={
-        accounts.length ? (
-          <button type="button" hx-post="/accounts/refresh" hx-target="#account-list" hx-swap="innerHTML">
-            Refresh all
+        <div class="site-header__actions">
+          <button type="button" class="button--quiet" data-connect-open>
+            + Connect<span class="hide-sm"> account</span>
           </button>
-        ) : undefined
+          {accounts.length ? (
+            <button type="button" hx-post="/accounts/refresh" hx-target="#account-list" hx-swap="innerHTML">
+              Refresh all
+            </button>
+          ) : null}
+        </div>
       }
     >
       {/* The header carries the visible title; this keeps a page heading for screen readers. */}
@@ -39,23 +92,16 @@ export function DashboardPage({ accounts, selectedId }: { accounts: AccountWithW
       </h1>
 
       <div id="account-list" class="accounts">
-        <AccountList accounts={accounts} selectedId={selectedId} />
+        <AccountList accounts={accounts} openIds={openIds} />
       </div>
-      <p class="empty-state">No accounts connected yet. Connect one below.</p>
+      <div class="empty-state">
+        <p>No accounts connected yet.</p>
+        <button type="button" data-connect-open>
+          + Connect an account
+        </button>
+      </div>
 
-      <section class="connect">
-        <h2>Connect an account</h2>
-        <p class="connect__intro">
-          Sign in with the account you use for each CLI. This app keeps its own login, so the CLIs stay signed in.
-        </p>
-        <div class="connect__buttons">
-          {PROVIDERS.map((p) => (
-            <a class="button button--quiet" href={`/connect/${p}`} safe>
-              {`+ ${PROVIDER_NAMES[p]}`}
-            </a>
-          ))}
-        </div>
-      </section>
+      <ConnectDialog />
     </Layout>
   );
 }

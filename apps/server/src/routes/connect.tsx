@@ -7,7 +7,7 @@ import { sealer } from "../config";
 import { HttpError, notFound } from "../lib/http-error";
 import { logger } from "../lib/logger";
 import { requestCollect } from "../lib/queue";
-import { ConnectForm, ConnectPage } from "../views/pages/connect";
+import { ConnectForm, ConnectPage, ConnectStep } from "../views/pages/connect";
 
 export const connectRouter = Router();
 
@@ -22,7 +22,7 @@ const finishBody = z.object({
   label: z.string().trim().max(60).optional(),
 });
 
-/** Step 1: start a PKCE login and show the vendor link plus a paste box. */
+/** Step 1: start a PKCE login and show the vendor link plus a paste box (just the steps for the dashboard dialog). */
 connectRouter.get("/:provider", async (req, res) => {
   const provider = providerParam(req.params.provider);
   const reconnectId = req.query.account ? Number(req.query.account) : null;
@@ -37,17 +37,16 @@ connectRouter.get("/:provider", async (req, res) => {
   const { url, state, verifier } = ADAPTERS[provider].startAuth();
   await db.pendingAuth.create({ data: { state, verifier, provider, accountId: reconnectId } });
 
+  const props = {
+    provider,
+    authUrl: url,
+    state,
+    pasteHint: ADAPTERS[provider].pasteHint,
+    fields: ADAPTERS[provider].connectFields,
+    reconnecting: reconnectId !== null,
+  };
   res.set("Cache-Control", "no-store");
-  await res.html(
-    <ConnectPage
-      provider={provider}
-      authUrl={url}
-      state={state}
-      pasteHint={ADAPTERS[provider].pasteHint}
-      fields={ADAPTERS[provider].connectFields}
-      reconnecting={reconnectId !== null}
-    />,
-  );
+  await res.html(req.htmx.partial ? <ConnectStep {...props} /> : <ConnectPage {...props} />);
 });
 
 /** Step 2: exchange the pasted code for tokens and store the account. */

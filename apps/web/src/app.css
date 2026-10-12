@@ -105,6 +105,11 @@ a {
   font-size: var(--step--1);
 }
 
+.site-header__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -242,213 +247,237 @@ button.button--danger {
   color: #3b78e7;
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
+/* Account list: a count with expand/collapse controls over one folding row per account. */
 
-/*
- * Tab strip: one gauge per account. The open tab sits on the panel's top border and covers it,
- * so tab and panel read as one surface. The strip scrolls sideways when tabs don't fit.
- */
-
-.tabs {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(12rem, 1fr);
-  gap: 0.5rem;
-  /* Overlap the panel border by 1px; the open tab drops into that row. */
-  margin-bottom: -1px;
-  padding-bottom: 1px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
-}
-
-.tab {
-  position: relative;
-  scroll-snap-align: start;
-  display: grid;
-  align-content: start;
-  gap: 0.15rem;
-  min-width: 0;
-  padding: 0.75rem 1rem 0.85rem;
-  border: 1px solid var(--line);
-  border-bottom: 0;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+.list-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
   color: var(--muted);
-  text-decoration: none;
+  font-size: var(--step--1);
 }
 
-.tab:hover {
-  color: var(--ink);
+.list-bar__actions {
+  display: flex;
+  gap: 0.75rem;
 }
 
-.tab:focus-visible {
+button.linkish {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: var(--step--1);
+}
+
+.subs {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.sub + .sub {
+  border-top: 1px solid var(--line);
+}
+
+/* Folded, a row is a gauge: who, how much is left of the tightest window, and when it resets. */
+.sub__head {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) 6.5rem minmax(4rem, 8rem) 15rem;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  padding: 0.85rem 1.25rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.sub__head::-webkit-details-marker {
+  display: none;
+}
+
+.sub__head:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+
+.sub__head:focus-visible {
   outline-offset: -3px;
 }
 
-.tab[aria-selected="true"] {
-  top: 1px;
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: inset 0 3px 0 var(--accent);
+.sub:first-child > .sub__head {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
-.tab__head {
+.sub:last-child:not([open]) > .sub__head {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.sub__chev {
+  justify-self: center;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.sub[open] .sub__chev {
+  transform: rotate(45deg) translate(-2px, -2px);
+}
+
+.sub__who {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+  min-width: 0;
+}
+
+.sub__provider {
   font-weight: 700;
 }
 
-.tab__label,
-.tab__window {
-  overflow: hidden;
+.sub__label {
+  overflow-wrap: anywhere;
+}
+
+.sub__who .tag {
+  color: var(--muted);
   font-size: var(--step--1);
-  text-overflow: ellipsis;
+}
+
+.pill {
+  padding: 0 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.tab__reading {
+.pill--error {
+  color: var(--danger);
+}
+.pill--stale {
+  color: var(--warn);
+}
+.pill--refreshing {
+  color: var(--warn);
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+
+.sub__reading {
   display: flex;
+  justify-content: flex-end;
   align-items: baseline;
   gap: 0.15rem;
-  margin-top: 0.35rem;
   font-family: var(--font-gauge);
   font-variant-numeric: tabular-nums;
 }
 
-.tab__pct {
-  font-size: 2.6rem;
+.sub__pct {
+  font-size: 1.75rem;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.03em;
-  color: var(--ink);
+  letter-spacing: -0.02em;
 }
 
-.tab__unit {
+.sub__unit {
+  color: var(--muted);
   font-size: var(--step--1);
   font-weight: 600;
 }
 
-.tab__reading--none {
-  min-height: 2.6rem;
-  align-items: center;
-  font-family: var(--font-sans);
-  font-size: var(--step-0);
-  font-weight: 600;
+/* No reading: the message takes the reading and bar columns. */
+.sub__reading--none {
+  grid-column: span 2;
+  justify-content: flex-start;
   color: var(--danger);
+  font-family: var(--font-sans);
+  font-size: var(--step--1);
+  font-weight: 600;
 }
 
 /* Colour only speaks up when something is running low. */
-.tab--low .tab__pct {
+.sub__head--low .sub__pct {
   color: var(--warn);
 }
-.tab--critical .tab__pct {
+.sub__head--critical .sub__pct {
   color: var(--danger);
 }
 
-.tab__fuel {
-  height: 0.3rem;
-  margin: 0.4rem 0 0.2rem;
+.sub__fuel {
+  height: 0.4rem;
   border-radius: 999px;
   background: var(--line);
   overflow: hidden;
 }
 
-.tab__fuel > span {
+.sub__fuel > span {
   display: block;
   height: 100%;
   border-radius: inherit;
   background: var(--ok);
 }
 
-.tab--low .tab__fuel > span {
+.sub__head--low .sub__fuel > span {
   background: var(--warn);
 }
-.tab--critical .tab__fuel > span {
+.sub__head--critical .sub__fuel > span {
   background: var(--danger);
 }
 
-.tab.is-stale .tab__reading,
-.tab.is-stale .tab__fuel {
+.sub__head.is-stale .sub__reading,
+.sub__head.is-stale .sub__fuel {
   opacity: 0.5;
 }
 
-.tab__status {
-  width: 0.55rem;
-  height: 0.55rem;
-  margin-left: auto;
-  border-radius: 50%;
-}
-
-.tab__status--refreshing {
-  background: var(--warn);
-  animation: pulse 1s ease-in-out infinite alternate;
-}
-.tab__status--error {
-  background: var(--danger);
-}
-.tab__status--stale {
-  border: 2px solid var(--muted);
-}
-
-/* Panel: the open account in detail. */
-
-.panel {
-  padding: 1.1rem 1.25rem 0.6rem;
-  border: 1px solid var(--line);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  background: var(--surface);
-}
-
-.panel__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  gap: 1rem;
-}
-
-.panel__title h2 {
-  margin: 0;
-  font-size: var(--step-1);
-}
-
-.panel__label {
+.sub__window {
+  overflow: hidden;
   color: var(--muted);
-  font-weight: 400;
-  overflow-wrap: anywhere;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.panel__meta {
+/* Open, the detail lines up under the account name. */
+.sub__body {
+  padding: 0 1.25rem 0.6rem 3.25rem;
+}
+
+.sub__bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.sub__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
-  margin: 0.3rem 0 0;
+  margin: 0;
   color: var(--muted);
   font-size: var(--step--1);
 }
 
-.panel__actions {
+.sub__actions {
   display: flex;
   gap: 0.4rem;
   align-items: start;
 }
 
-.panel__actions button,
+.sub__actions button,
 .menu summary {
   padding: 0.35rem 0.7rem;
   font-size: var(--step--1);
 }
 
-.panel__error {
+.sub__error {
   margin: 0.75rem 0 0;
   padding: 0.5rem 0.75rem;
   border-left: 3px solid var(--danger);
@@ -457,16 +486,20 @@ button.button--danger {
   overflow-wrap: anywhere;
 }
 
-.panel__empty {
+.sub__empty {
   margin: 1rem 0 0.6rem;
   color: var(--muted);
 }
 
-.panel.is-stale .meters {
+.sub__body .meters {
+  margin-top: 0.6rem;
+}
+
+.sub__body.is-stale .meters {
   opacity: 0.55;
 }
 
-.panel.is-stale .status--age {
+.sub__body.is-stale .status--age {
   color: var(--warn);
 }
 
@@ -625,27 +658,103 @@ button.button--danger {
   display: none;
 }
 
-/* Connect */
+/* Connect: a dialog on the dashboard, a page of its own without JS. */
 
-.connect {
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--line);
+.modal {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
 }
 
-.connect h2 {
+.modal::backdrop {
+  background: rgb(8 11 16 / 0.55);
+}
+
+.modal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem 0.25rem;
+}
+
+.modal__head h2 {
+  margin: 0;
   font-size: var(--step-1);
 }
 
-.connect__intro {
-  max-width: 60ch;
+button.modal__close {
+  padding: 0.1rem 0.55rem;
+  border-color: transparent;
+  background: transparent;
   color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1.4;
 }
 
-.connect__buttons {
-  display: flex;
-  flex-wrap: wrap;
+.modal__step {
+  padding: 0.5rem 1.25rem 1.25rem;
+}
+
+.modal__intro {
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.choices {
+  display: grid;
   gap: 0.5rem;
+}
+
+.choice {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.choice:hover {
+  border-color: var(--accent);
+}
+
+.choice__name {
+  font-weight: 700;
+}
+
+.choice__desc {
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.modal .steps {
+  gap: 1rem;
+  margin: 1rem 0 0;
+}
+
+.form-foot {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Back/Cancel only means something inside the dialog; the page has its own Cancel link. */
+[data-connect-back] {
+  display: none;
+}
+
+.modal .form-foot {
+  justify-content: flex-end;
+}
+
+.modal [data-connect-back] {
+  display: inline-block;
 }
 
 .steps {
@@ -702,20 +811,28 @@ button.button--danger {
 }
 
 @media (max-width: 40rem) {
-  .tabs {
-    grid-auto-columns: minmax(9.5rem, 1fr);
+  .hide-sm {
+    display: none;
   }
-  .tab {
-    padding: 0.6rem 0.75rem 0.7rem;
+  /* Who and the reading on one line, then the bar, then the reset. */
+  .sub__head {
+    grid-template-columns: 1rem minmax(0, 1fr) auto;
+    padding: 0.75rem 1rem;
   }
-  .tab__pct {
-    font-size: 2.1rem;
+  .sub__reading {
+    grid-area: 1 / 3;
   }
-  .panel {
+  .sub__reading--none {
+    grid-area: 2 / 2 / 3 / -1;
+  }
+  .sub__fuel {
+    grid-area: 2 / 2 / 3 / -1;
+  }
+  .sub__window {
+    grid-area: 3 / 2 / 4 / -1;
+  }
+  .sub__body {
     padding-inline: 1rem;
-  }
-  .panel__head {
-    flex-direction: column;
   }
   /* Label and reading on one line, the bar and reset time under them. */
   .meter {
