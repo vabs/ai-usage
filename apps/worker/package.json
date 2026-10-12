@@ -1,0 +1,19 @@
+{
+  "name": "@app/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false --env-file-if-exists=../../.env src/index.ts",
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@app/db": "*",
+    "@app/providers": "*",
+    "@app/shared": "*",
+    "bullmq": "^6.3.12",
+    "zod": "^4.6.5"
+  }
+}
