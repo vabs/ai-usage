@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// The connection URL lives in prisma.config.ts (Prisma 7+).
+datasource db {
+  provider = "sqlite"
+}
+
+// A connected vendor login. The tokens come from this app's own OAuth sign-in (not
+// copied from a CLI) and are stored AES-256-GCM encrypted with TOKEN_ENCRYPTION_KEY.
+model Account {
+  id            Int       @id @default(autoincrement())
+  // claude | codex | gemini  (see PROVIDERS in @app/shared)
+  provider      String
+  label         String
+  // Sealed JSON, see Credentials in @app/providers
+  credentials   String
+  plan          String?
+  bankedResets  Int?
+  // idle | queued | running  (see COLLECT_STATUS in @app/shared)
+  status        String    @default("idle")
+  lastAttemptAt DateTime?
+  lastOkAt      DateTime?
+  lastError     String?
+  // auth | http | parse | internal. "auth" means the account must be reconnected.
+  lastErrorKind String?
+  // Last raw usage response (no tokens), for finding undocumented fields.
+  lastRaw       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  windows   UsageWindow[]
+  snapshots UsageSnapshot[]
+
+  @@index([provider])
+}
+
+// Latest value per account and window. The dashboard and /api/usage read this.
+model UsageWindow {
+  accountId  Int
+  // "5h", "weekly", "weekly:opus", "model:gemini-2.5-pro"
+  key        String
+  label      String
+  usedPct    Float
+  resetsAt   DateTime?
+  capturedAt DateTime
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@id([accountId, key])
+}
+
+// Append-only history, one row per window per collection, for burn-rate trends.
+model UsageSnapshot {
+  id         Int       @id @default(autoincrement())
+  accountId  Int
+  key        String
+  usedPct    Float
+  resetsAt   DateTime?
+  capturedAt DateTime
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, key, capturedAt])
+}
+
+// A sign-in between "open the vendor page" and "paste the code". Deleted on use or after an hour.
+model PendingAuth {
+  state     String   @id
+  provider  String
+  verifier  String
+  // Set when reconnecting an existing account instead of adding a new one.
+  accountId Int?
+  createdAt DateTime @default(now())
+}
