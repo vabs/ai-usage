@@ -46,7 +46,7 @@ services:
       <<: *app-env
       PORT: 3000
       HOST: 0.0.0.0
-      APP_NAME: ${APP_NAME:-Usage}
+      APP_TITLE: ${APP_TITLE:-Usage Tracker}
       DASHBOARD_USER: ${DASHBOARD_USER:-admin}
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-}
       TRUST_PROXY: ${TRUST_PROXY:-0}

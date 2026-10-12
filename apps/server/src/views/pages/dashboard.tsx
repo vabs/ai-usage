@@ -1,4 +1,5 @@
 import { PROVIDER_NAMES, PROVIDERS } from "@app/shared";
+import { env } from "../../config";
 import type { AccountWithWindows } from "../../lib/accounts";
 import { AccountPanel } from "../components/account-panel";
 import { AccountTab } from "../components/account-tab";
@@ -23,15 +24,19 @@ export function AccountList({ accounts, selectedId }: { accounts: AccountWithWin
 
 export function DashboardPage({ accounts, selectedId }: { accounts: AccountWithWindows[]; selectedId: number | null }) {
   return (
-    <Layout>
-      <section class="toolbar">
-        <h1>Usage</h1>
-        {accounts.length ? (
+    <Layout
+      actions={
+        accounts.length ? (
           <button type="button" hx-post="/accounts/refresh" hx-target="#account-list" hx-swap="innerHTML">
             Refresh all
           </button>
-        ) : null}
-      </section>
+        ) : undefined
+      }
+    >
+      {/* The header carries the visible title; this keeps a page heading for screen readers. */}
+      <h1 class="visually-hidden" safe>
+        {env.APP_TITLE}
+      </h1>
 
       <div id="account-list" class="accounts">
         <AccountList accounts={accounts} selectedId={selectedId} />

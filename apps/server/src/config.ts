@@ -3,7 +3,8 @@ import { z } from "zod";
 
 export const env = parseEnv(
   baseEnvSchema.extend({
-    APP_NAME: z.string().default("Usage"),
+    // Not APP_NAME: hosting platforms (Coolify among them) can fill that with the resource name.
+    APP_TITLE: z.string().default("Usage Tracker"),
     // Loopback by default: this app holds OAuth tokens. Docker sets 0.0.0.0 inside the container.
     HOST: z.string().default("127.0.0.1"),
     PORT: z.coerce.number().int().positive().default(3000),

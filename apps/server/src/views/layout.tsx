@@ -14,10 +14,11 @@ const htmxConfig = JSON.stringify({
   ],
 });
 
-type LayoutProps = PropsWithChildren<{ title?: string }>;
+type LayoutProps = PropsWithChildren<{ title?: string; /** Page-level controls shown at the right of the header. */ actions?: JSX.Element }>;
 
-export function Layout({ title, children }: LayoutProps) {
-  const pageTitle = title ? `${title} | ${env.APP_NAME}` : env.APP_NAME;
+// `safe` prefix: tells the XSS scanner this is server-built markup, not text to escape.
+export function Layout({ title, actions: safeActions, children }: LayoutProps) {
+  const pageTitle = title ? `${title} | ${env.APP_TITLE}` : env.APP_TITLE;
   return (
     <>
       {"<!doctype html>"}
@@ -33,8 +34,9 @@ export function Layout({ title, children }: LayoutProps) {
         <body hx-boost="true">
           <header class="site-header">
             <a href="/" class="brand" safe>
-              {env.APP_NAME}
+              {env.APP_TITLE}
             </a>
+            {safeActions}
           </header>
           <main class="page">{children}</main>
           <div id="toasts" class="toasts" aria-live="polite"></div>
