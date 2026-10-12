@@ -49,9 +49,10 @@ services:
       DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-}
       TRUST_PROXY: ${TRUST_PROXY:-0}
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
-    # Loopback only: put a TLS reverse proxy (Caddy, Cloudflare Tunnel, Tailscale) in front.
-    ports:
-      - "127.0.0.1:${PORT:-3000}:3000"
+    # No host port: a reverse proxy on the Docker network (Coolify's Traefik, Caddy) reaches it
+    # here. To publish it on your own machine, add docker-compose.dev.yml (npm run docker:up).
+    expose:
+      - "3000"
     volumes:
       - sqlite-data:/data
     depends_on:

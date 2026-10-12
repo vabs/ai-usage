@@ -81,16 +81,33 @@ vendor. Each card's ⋯ menu has **Reconnect**, **Raw response** and **Disconnec
 
 ## Deploying
 
-The Docker Compose stack (redis, migrate, server, worker) runs it as-is:
+`docker-compose.yml` defines the stack: redis, migrate (one-shot), server, worker. It publishes no
+host ports. A reverse proxy on the same Docker network routes to the server's port 3000.
+
+### Coolify
+
+1. Create a **Docker Compose** resource from this repo, using `docker-compose.yml`.
+2. Set the environment variables Coolify lists:
+   - `TOKEN_ENCRYPTION_KEY` (`openssl rand -base64 32`)
+   - `DASHBOARD_PASSWORD`
+   - `TRUST_PROXY=1`
+   - `GEMINI_OAUTH_CLIENT_ID` and `GEMINI_OAUTH_CLIENT_SECRET`, if you use Gemini.
+3. On the **server** service, set the domain with the container port, e.g.
+   `https://usage.example.com:3000`. Coolify's proxy routes to it and handles TLS. Leave the other
+   services without a domain.
+
+`migrate` exits once migrations are applied. That is expected, and server and worker wait for it.
+
+### Your own machine or a VPS
 
 ```bash
-# .env: TOKEN_ENCRYPTION_KEY, DASHBOARD_PASSWORD (required in production), TRUST_PROXY=1 behind a proxy
-npm run docker:up
+# .env: TOKEN_ENCRYPTION_KEY, DASHBOARD_PASSWORD (required in production)
+npm run docker:up        # adds docker-compose.dev.yml: dashboard on 127.0.0.1:3000
 ```
 
-The server port is published on `127.0.0.1` only. Expose it through a TLS reverse proxy (Caddy,
-Cloudflare Tunnel) or a private network such as Tailscale. Tailscale is the safer choice: then the
-dashboard is never on the public internet.
+The port is bound to `127.0.0.1` only. To reach it from elsewhere, put a TLS proxy (Caddy,
+Cloudflare Tunnel) in front, or use a private network such as Tailscale. Tailscale is the safest
+option: the dashboard is then never on the public internet.
 
 ## Security
 

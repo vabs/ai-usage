@@ -1,6 +1,11 @@
-# Local development: run Redis in Docker, run the apps on your machine with tsx watch.
-#   npm run services:up   ->  Redis on localhost:6379
+# Your own machine: publish ports on 127.0.0.1 only.
+#   npm run services:up  ->  Redis on 127.0.0.1:6379 (apps run on the host with tsx watch)
+#   npm run docker:up    ->  the full stack, dashboard on 127.0.0.1:${PORT:-3000}
+# Not for Coolify or other PaaS: their proxy routes to the container and the host port may be taken.
 services:
   redis:
     ports:
       - "127.0.0.1:6379:6379"
+  server:
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"

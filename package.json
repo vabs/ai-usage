@@ -27,9 +27,9 @@
     "pm2:logs": "pm2 logs",
     "services:up": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis",
     "services:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
-    "docker:up": "docker compose up --build -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f server worker",
+    "docker:up": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d",
+    "docker:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
+    "docker:logs": "docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f server worker",
     "test": "vitest run",
     "test:watch": "vitest"
   },
