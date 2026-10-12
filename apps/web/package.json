@@ -1,0 +1,18 @@
+{
+  "name": "@app/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node build.mjs --watch",
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@app/shared": "*",
+    "htmx.org": "^2.0.11"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

@@ -1,0 +1,524 @@
+/*
+ * Starter styles. Everything is driven by the tokens below: change them per idea
+ * rather than editing individual rules.
+ */
+
+:root {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #18202b;
+  --muted: #5e6875;
+  --line: #d9dee5;
+  --accent: #2e5bba;
+  --accent-ink: #ffffff;
+  --ok: #2f7a4a;
+  --warn: #9a6b00;
+  --danger: #b4321f;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --measure: 40rem;
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161c;
+    --surface: #1a2029;
+    --ink: #e6eaf0;
+    --muted: #9aa4b2;
+    --line: #2b3440;
+    --accent: #7fa2f0;
+    --accent-ink: #0d1320;
+    --ok: #6cc28c;
+    --warn: #e0b04a;
+    --danger: #f08a78;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: var(--step-0) / 1.55 var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.5em;
+}
+
+h1 {
+  font-size: var(--step-2);
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Layout */
+
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.site-header,
+.page {
+  padding-inline: max(1.25rem, calc((100vw - var(--measure)) / 2));
+}
+
+.brand {
+  display: inline-block;
+  padding-block: 0.9rem;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.page {
+  padding-block: 2.5rem 4rem;
+}
+
+.intro p {
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+/* Forms */
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+button {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.button--quiet {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.field-error {
+  margin: 0.4rem 0 0;
+  color: var(--danger);
+  font-size: var(--step--1);
+}
+
+a.button {
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a.button.button--quiet {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+button.button--danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.hint {
+  margin: 0.35rem 0 1rem;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+/* Dashboard */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.toolbar h1 {
+  margin: 0;
+}
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.card.is-stale .windows {
+  opacity: 0.55;
+}
+
+.card.is-stale .status--age {
+  color: var(--warn);
+}
+
+.card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+}
+
+.card__title {
+  margin: 0;
+  font-size: var(--step-1);
+}
+
+.card__label {
+  color: var(--muted);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.card__actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: start;
+}
+
+.card__actions button,
+.menu summary {
+  padding: 0.35rem 0.7rem;
+  font-size: var(--step--1);
+}
+
+.card__error {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+
+.card__empty {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+}
+
+.tag {
+  padding: 0 0.45em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+}
+
+.provider--claude {
+  color: #c15f3c;
+}
+.provider--codex {
+  color: var(--ink);
+}
+.provider--gemini {
+  color: #3b78e7;
+}
+
+/* Overflow menu built on <details>: no JS needed. */
+.menu {
+  position: relative;
+}
+
+.menu summary {
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  line-height: 1.55;
+}
+
+.menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu__items {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.3rem);
+  z-index: 5;
+  display: grid;
+  gap: 0.25rem;
+  min-width: 11rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
+  font-size: var(--step--1);
+}
+
+.menu__items a {
+  padding: 0.3rem 0.4rem;
+}
+
+/* Usage windows */
+
+.windows {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.window__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: var(--step--1);
+}
+
+.window__label {
+  font-weight: 600;
+}
+
+.window__pct {
+  font-variant-numeric: tabular-nums;
+}
+
+.window__reset {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar {
+  height: 0.5rem;
+  margin-top: 0.3rem;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ok);
+  transition: width 0.4s ease;
+}
+
+.bar--mid .bar__fill {
+  background: var(--warn);
+}
+.bar--high .bar__fill {
+  background: var(--danger);
+}
+
+.status::before {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.4em;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: 0.1em;
+}
+
+.status--age {
+  color: var(--ok);
+}
+
+.status--running {
+  color: var(--warn);
+}
+
+.status--running::before {
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.25;
+  }
+}
+
+/* Shown only while the list is empty (works after htmx inserts or removes items). */
+.empty-state {
+  padding-block: 1.5rem;
+  color: var(--muted);
+}
+.cards:not(:empty) + .empty-state {
+  display: none;
+}
+
+/* Connect */
+
+.connect {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.connect h2 {
+  font-size: var(--step-1);
+}
+
+.connect__intro {
+  color: var(--muted);
+}
+
+.connect__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.steps {
+  list-style: none;
+  margin: 1.5rem 0;
+  padding: 0;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.step-title {
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.connect-form input[type="text"] {
+  width: 100%;
+}
+
+.error-page {
+  padding-block: 2rem;
+}
+
+/* Toasts */
+
+.toasts {
+  position: fixed;
+  inset: auto 1rem 1rem auto;
+  display: grid;
+  gap: 0.5rem;
+  max-width: min(24rem, calc(100vw - 2rem));
+  z-index: 10;
+}
+
+.toast {
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.toast--error {
+  background: var(--danger);
+  color: #fff;
+}
+
+.toast--leaving {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+
+@media (max-width: 34rem) {
+  .card__head {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
