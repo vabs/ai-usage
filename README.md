@@ -115,7 +115,8 @@ This app holds OAuth tokens that can read your account usage, so:
 
 - Tokens are encrypted at rest with AES-256-GCM (`TOKEN_ENCRYPTION_KEY`). Keep the key out of the DB
   backups. Losing it means reconnecting every account.
-- The Claude login asks only for `user:profile`, so its token cannot run inference.
+- The Claude login asks for `user:profile` (needed for usage) and `user:inference` (claude.ai rejects
+  `user:profile` on its own). It never asks for `org:create_api_key`. Override with `CLAUDE_OAUTH_SCOPES`.
 - The whole UI and API sit behind HTTP Basic auth. Production refuses to start without a password.
 - Cross-site POST/DELETE requests are rejected (`Sec-Fetch-Site`), because browsers replay Basic
   auth credentials on cross-site form posts.

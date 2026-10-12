@@ -10,9 +10,11 @@ const AUTHORIZE_URL = "https://claude.ai/oauth/authorize";
 const TOKEN_URL = "https://platform.claude.com/v1/oauth/token";
 // Anthropic's "copy this code" page, so no local callback server is needed.
 const REDIRECT_URI = "https://platform.claude.com/oauth/code/callback";
-// user:profile is what the usage endpoint checks. We never ask for inference or API-key scopes,
-// so a leaked token can read usage and nothing else. (Claude Code itself asks for six scopes.)
-const SCOPES = "user:profile";
+// The usage endpoint checks user:profile. Asking for that scope alone made claude.ai answer
+// "Invalid request format"; working clients also send user:inference (Claude Code sends six scopes).
+// Never org:create_api_key. CLAUDE_OAUTH_SCOPES overrides this if Anthropic changes what it accepts.
+const DEFAULT_SCOPES = "user:profile user:inference";
+const scopes = () => process.env.CLAUDE_OAUTH_SCOPES?.trim() || DEFAULT_SCOPES;
 const USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const OAUTH_BETA = "oauth-2025-04-20";
 
@@ -86,7 +88,7 @@ export const claude: ProviderAdapter = {
       client_id: CLIENT_ID,
       response_type: "code",
       redirect_uri: REDIRECT_URI,
-      scope: SCOPES,
+      scope: scopes(),
       code_challenge: challenge,
       code_challenge_method: "S256",
       state,
