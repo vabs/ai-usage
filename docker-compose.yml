@@ -1,0 +1,82 @@
+name: usage
+
+x-app-env: &app-env
+  NODE_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  DATABASE_URL: file:/data/app.db
+  REDIS_URL: redis://redis:6379
+  TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-}
+  COLLECT_INTERVAL_MINUTES: ${COLLECT_INTERVAL_MINUTES:-5}
+  GEMINI_OAUTH_CLIENT_ID: ${GEMINI_OAUTH_CLIENT_ID:-}
+  GEMINI_OAUTH_CLIENT_SECRET: ${GEMINI_OAUTH_CLIENT_SECRET:-}
+
+services:
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # One-shot: applies Prisma migrations, then exits. server/worker wait for it.
+  migrate:
+    build:
+      context: .
+      target: build
+    command: ["npm", "run", "db:deploy"]
+    user: node
+    environment:
+      <<: *app-env
+    volumes:
+      - sqlite-data:/data
+    restart: "no"
+
+  server:
+    build:
+      context: .
+      target: server
+    environment:
+      <<: *app-env
+      PORT: 3000
+      HOST: 0.0.0.0
+      APP_NAME: ${APP_NAME:-Usage}
+      DASHBOARD_USER: ${DASHBOARD_USER:-admin}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+    # Loopback only: put a TLS reverse proxy (Caddy, Cloudflare Tunnel, Tailscale) in front.
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    volumes:
+      - sqlite-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      target: worker
+    environment:
+      <<: *app-env
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+    volumes:
+      - sqlite-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:
+  redis-data:

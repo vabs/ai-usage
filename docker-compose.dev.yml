@@ -1,0 +1,6 @@
+# Local development: run Redis in Docker, run the apps on your machine with tsx watch.
+#   npm run services:up   ->  Redis on localhost:6379
+services:
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"
