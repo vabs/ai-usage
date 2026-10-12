@@ -56,7 +56,7 @@ What you copy differs per vendor:
 | --- | --- |
 | Claude | Anthropic shows a code page. Copy the whole code (it contains a `#`). |
 | Codex | The browser goes to `http://127.0.0.1:1455/auth/callback?code=…` and fails to load. That's expected. Copy the full URL from the address bar. |
-| Gemini | Google shows an authorization code. Copy it. For a new Google account, run `gemini` once first so Code Assist is set up. |
+| Gemini | Google shows an authorization code. Copy it. For a new Google account, run `gemini` once first so Code Assist is set up. Workspace accounts (and Code Assist Standard/Enterprise) also need the **Google Cloud project ID**, the same one gemini uses as `GOOGLE_CLOUD_PROJECT`. Enter it on the connect page, or set `GOOGLE_CLOUD_PROJECT` on the server. |
 
 Gemini needs one extra setup step: set `GEMINI_OAUTH_CLIENT_ID` and `GEMINI_OAUTH_CLIENT_SECRET` in
 `.env`. They are the Gemini CLI's public OAuth client values, in

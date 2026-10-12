@@ -9,4 +9,4 @@ export const ADAPTERS: Record<Provider, ProviderAdapter> = { claude, codex, gemi
 export { collectUsage } from "./collect";
 export { openCredentials, sealCredentials } from "./credentials";
 export { ProviderError } from "./http";
-export type { ConnectedAccount, Credentials, PendingAuth, ProviderAdapter } from "./types";
+export type { ConnectedAccount, ConnectField, Credentials, PendingAuth, ProviderAdapter } from "./types";

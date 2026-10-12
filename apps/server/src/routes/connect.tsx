@@ -44,6 +44,7 @@ connectRouter.get("/:provider", async (req, res) => {
       authUrl={url}
       state={state}
       pasteHint={ADAPTERS[provider].pasteHint}
+      fields={ADAPTERS[provider].connectFields}
       reconnecting={reconnectId !== null}
     />,
   );
@@ -60,6 +61,10 @@ connectRouter.post("/:provider", async (req, res) => {
     throw new HttpError(400, "This sign-in attempt expired. Start again from the dashboard.");
   }
 
+  const fields = Object.fromEntries(
+    (adapter.connectFields ?? []).map((f) => [f.name, String(req.body?.[f.name] ?? "").trim()]),
+  );
+
   const showError = (error: string) => {
     res.hx.retarget("#connect-form").reswap("outerHTML");
     return res.html(
@@ -67,6 +72,8 @@ connectRouter.post("/:provider", async (req, res) => {
         provider={provider}
         state={pending.state}
         pasteHint={adapter.pasteHint}
+        fields={adapter.connectFields}
+        values={fields}
         reconnecting={pending.accountId !== null}
         label={String(req.body?.label ?? "")}
         pasted={String(req.body?.pasted ?? "")}
@@ -80,15 +87,16 @@ connectRouter.post("/:provider", async (req, res) => {
 
   let connected;
   try {
-    connected = await adapter.finishAuth(parsed.data.pasted, pending);
+    connected = await adapter.finishAuth(parsed.data.pasted, pending, fields);
   } catch (err) {
     if (!(err instanceof ProviderError)) throw err;
     logger.warn(`Connect ${provider} failed`, { kind: err.kind, status: err.status, err: err.message });
-    // Codes are single-use: a failed exchange needs a fresh sign-in, except for a typo in what was pasted.
+    // Codes are single-use: after a failed sign-in the user needs a new one. "parse" errors are
+    // usually a typo in the paste or a form field, caught before the code is used.
     return showError(
       err.kind === "parse"
         ? err.message
-        : `${PROVIDER_NAMES[provider]} rejected the code (${err.message.replace(/\.$/, "")}). Open the sign-in link again and paste the new code.`,
+        : `${PROVIDER_NAMES[provider]} sign-in failed: ${err.message.replace(/\.$/, "")}. Open the sign-in link again and paste the new code.`,
     );
   }
 

@@ -32,24 +32,69 @@ type TokenResponse = { access_token: string; refresh_token?: string; expires_in?
 
 const bearer = (c: Pick<Credentials, "accessToken">) => ({ authorization: `Bearer ${c.accessToken}` });
 
-/** Code Assist routes every call through a Google Cloud project; free-tier users get a managed one. */
-async function loadProject(accessToken: string): Promise<{ projectId: string; tier: string | null }> {
-  const res = await requestJson<{ cloudaicompanionProject?: string | { id?: string }; currentTier?: { id?: string } }>(
-    `${CODE_ASSIST}:loadCodeAssist`,
-    {
-      method: "POST",
-      ...jsonBody(
-        { metadata: { ideType: "IDE_UNSPECIFIED", platform: "PLATFORM_UNSPECIFIED", pluginType: "GEMINI" } },
-        bearer({ accessToken }),
-      ),
-    },
-  );
-  const project = res.cloudaicompanionProject;
-  const projectId = typeof project === "string" ? project : project?.id;
-  if (!projectId) {
-    throw new ProviderError("Google returned no Code Assist project. Run `gemini` once with this account to finish onboarding.", "auth");
+type Tier = { id?: string; name?: string };
+
+export type LoadCodeAssistResponse = {
+  currentTier?: Tier | null;
+  paidTier?: Tier | null;
+  cloudaicompanionProject?: string | { id?: string } | null;
+  ineligibleTiers?: Array<{ reasonMessage?: string; reasonCode?: string; validationUrl?: string }> | null;
+};
+
+const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/;
+
+/** Validates the optional project ID from the connect form, before the one-time code is spent. */
+export function readProjectId(raw: string | undefined): string | undefined {
+  const id = raw?.trim();
+  if (!id) return undefined;
+  if (/^\d+$/.test(id)) {
+    throw new ProviderError(`"${id}" is a project number. Enter the project ID instead, e.g. my-project-123.`, "parse");
   }
-  return { projectId, tier: res.currentTier?.id ?? null };
+  if (!PROJECT_ID.test(id)) throw new ProviderError(`"${id}" isn't a valid Google Cloud project ID.`, "parse");
+  return id;
+}
+
+/**
+ * Picks the Code Assist project the way gemini-cli's setupUser does: Google's managed project
+ * (free tier), otherwise the user's own project, which Workspace accounts and the
+ * Standard/Enterprise tiers require (GOOGLE_CLOUD_PROJECT in the CLI).
+ */
+export function resolveProject(res: LoadCodeAssistResponse, requested?: string): { projectId: string; tier: string | null } {
+  if (!res.currentTier) {
+    const validationUrl = res.ineligibleTiers?.find((t) => t.validationUrl)?.validationUrl;
+    if (validationUrl) throw new ProviderError(`Google wants to verify this account first: ${validationUrl}`, "auth");
+    throw new ProviderError(
+      "This account isn't set up for Gemini Code Assist yet. Run `gemini` once and sign in with it, then connect again.",
+      "auth",
+    );
+  }
+
+  const tier = res.paidTier?.id ?? res.currentTier.id ?? null;
+  const project = res.cloudaicompanionProject;
+  const managed = typeof project === "string" ? project : project?.id;
+  if (managed) return { projectId: managed, tier };
+  if (requested) return { projectId: requested, tier };
+
+  const reasons = (res.ineligibleTiers ?? []).map((t) => t.reasonMessage).filter(Boolean);
+  if (reasons.length) throw new ProviderError(`Google says: ${reasons.join(" ")}`, "auth");
+  throw new ProviderError(
+    "This account needs a Google Cloud project ID (the GOOGLE_CLOUD_PROJECT you use with gemini). Enter it below and sign in again.",
+    "auth",
+  );
+}
+
+async function loadProject(accessToken: string, requested?: string) {
+  const res = await requestJson<LoadCodeAssistResponse>(`${CODE_ASSIST}:loadCodeAssist`, {
+    method: "POST",
+    ...jsonBody(
+      {
+        cloudaicompanionProject: requested,
+        metadata: { ideType: "IDE_UNSPECIFIED", platform: "PLATFORM_UNSPECIFIED", pluginType: "GEMINI", duetProject: requested },
+      },
+      bearer({ accessToken }),
+    ),
+  });
+  return resolveProject(res, requested);
 }
 
 type QuotaBody = {
@@ -79,6 +124,13 @@ export function parseGeminiUsage(body: unknown, plan: string | null = null): Usa
 export const gemini: ProviderAdapter = {
   id: "gemini",
   pasteHint: "After approving, Google shows an authorization code. Copy it and paste it here.",
+  connectFields: [
+    {
+      name: "projectId",
+      label: "Google Cloud project ID (optional)",
+      hint: "Only if gemini needs GOOGLE_CLOUD_PROJECT for this account: Workspace accounts and Code Assist Standard/Enterprise. Leave empty for a personal Google account, or to use the server's GOOGLE_CLOUD_PROJECT.",
+    },
+  ],
 
   configError: () =>
     process.env.GEMINI_OAUTH_CLIENT_ID && process.env.GEMINI_OAUTH_CLIENT_SECRET ? null : MISSING_CLIENT,
@@ -101,7 +153,11 @@ export const gemini: ProviderAdapter = {
     return { url: url.toString(), verifier, state };
   },
 
-  async finishAuth(pasted, pending) {
+  async finishAuth(pasted, pending, fields = {}) {
+    // Same fallback as gemini-cli: the form field wins, then the environment.
+    const requestedProject = readProjectId(
+      fields.projectId || process.env.GOOGLE_CLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT_ID,
+    );
     const code = readPastedCode(pasted, pending.state);
     const client = geminiClient();
     const tokens = await requestJson<TokenResponse>(TOKEN_URL, {
@@ -118,7 +174,7 @@ export const gemini: ProviderAdapter = {
     if (!tokens.refresh_token) throw new ProviderError("Google returned no refresh token. Start the sign-in again.", "auth");
 
     const [{ projectId, tier }, user] = await Promise.all([
-      loadProject(tokens.access_token),
+      loadProject(tokens.access_token, requestedProject),
       requestJson<{ email?: string }>(USERINFO_URL, { headers: bearer({ accessToken: tokens.access_token }) }).catch(() => ({ email: undefined })),
     ]);
     return {

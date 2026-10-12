@@ -1,3 +1,4 @@
+import type { ConnectField } from "@app/providers";
 import { type Provider, PROVIDER_NAMES } from "@app/shared";
 import { Layout } from "../layout";
 
@@ -5,13 +6,25 @@ type ConnectFormProps = {
   provider: Provider;
   state: string;
   pasteHint: string;
+  fields?: ConnectField[];
+  values?: Record<string, string>;
   label?: string;
   reconnecting: boolean;
   error?: string;
   pasted?: string;
 };
 
-export function ConnectForm({ provider, state, pasteHint, label = "", reconnecting, error, pasted = "" }: ConnectFormProps) {
+export function ConnectForm({
+  provider,
+  state,
+  pasteHint,
+  fields = [],
+  values = {},
+  label = "",
+  reconnecting,
+  error,
+  pasted = "",
+}: ConnectFormProps) {
   return (
     <form
       id="connect-form"
@@ -37,6 +50,25 @@ export function ConnectForm({ provider, state, pasteHint, label = "", reconnecti
       <p id="pasted-hint" class="hint" safe>
         {pasteHint}
       </p>
+      {fields.map((f) => (
+        <>
+          <label for={`field-${f.name}`} safe>
+            {f.label}
+          </label>
+          <input
+            id={`field-${f.name}`}
+            name={f.name}
+            type="text"
+            value={values[f.name] ?? ""}
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby={`field-${f.name}-hint`}
+          />
+          <p id={`field-${f.name}-hint`} class="hint" safe>
+            {f.hint}
+          </p>
+        </>
+      ))}
       {reconnecting ? null : (
         <>
           <label for="label">Name (optional)</label>

@@ -23,6 +23,9 @@ export type ConnectedAccount = {
   identity: string | null;
 };
 
+/** An extra input on the connect form, passed to finishAuth (e.g. Gemini's Google Cloud project). */
+export type ConnectField = { name: string; label: string; hint: string };
+
 /**
  * One adapter per vendor. Every undocumented URL and response shape lives inside
  * its adapter file, so a vendor change is a one-file patch.
@@ -33,10 +36,11 @@ export interface ProviderAdapter {
   configError?(): string | null;
   /** Shown under the paste box on the connect page. */
   pasteHint: string;
+  connectFields?: ConnectField[];
   /** Builds the vendor sign-in URL (PKCE). */
   startAuth(): PendingAuth & { url: string };
   /** Exchanges what the user pasted (a code, "code#state", or a redirect URL) for tokens. */
-  finishAuth(pasted: string, pending: PendingAuth): Promise<ConnectedAccount>;
+  finishAuth(pasted: string, pending: PendingAuth, fields?: Record<string, string>): Promise<ConnectedAccount>;
   refresh(credentials: Credentials): Promise<Credentials>;
   fetchUsage(credentials: Credentials): Promise<UsageReport>;
 }
