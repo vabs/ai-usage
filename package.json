@@ -1,0 +1,65 @@
+{
+  "name": "usage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "setup": "npm run db:generate && npm run db:migrate",
+    "dev": "npm run db:generate && concurrently -k -n web,server,worker -c cyan,green,magenta \"npm run dev -w @app/web\" \"npm run dev -w @app/server\" \"npm run dev -w @app/worker\"",
+    "build": "npm run db:generate && npm run build -w @app/web -w @app/server -w @app/worker",
+    "start": "pm2-runtime start ecosystem.config.cjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "xss-scan": "npm run xss-scan -w @app/server",
+    "db:generate": "npm run generate -w @app/db",
+    "db:migrate": "npm exec -w @app/db -- prisma migrate dev",
+    "db:deploy": "npm run deploy -w @app/db",
+    "db:studio": "npm run studio -w @app/db",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:reload": "pm2 reload ecosystem.config.cjs",
+    "pm2:stop": "pm2 delete ecosystem.config.cjs",
+    "pm2:logs": "pm2 logs",
+    "services:up": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d redis",
+    "services:down": "docker compose -f docker-compose.yml -f docker-compose.dev.yml down",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f server worker",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "pm2": "^7.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "concurrently": "^10.0.6",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "pm2": {
+      "chokidar": "^4.0.3",
+      "js-yaml": "^4.3.2"
+    },
+    "tsup": {
+      "esbuild": "^0.28.2"
+    },
+    "@prisma/config": {
+      "deepmerge-ts": "^8.0.2"
+    },
+    "prisma": {
+      "mysql2": "^3.24.5"
+    },
+    "get-uri": {
+      "basic-ftp": "^6.2.3"
+    }
+  }
+}

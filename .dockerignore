@@ -1,0 +1,23 @@
+# The build stage runs `npm ci` and `npm run build` inside the image,
+# so host dependencies and build output must never be copied in.
+**/node_modules
+**/dist
+packages/db/src/generated
+
+# Local data and secrets
+data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+
+# Tooling / OS
+.git
+.vscode
+.idea
+**/.DS_Store
+*.log
+npm-debug.log*

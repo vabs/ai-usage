@@ -1,0 +1,5 @@
+{
+  // Use the workspace TypeScript so @kitajs/ts-html-plugin flags unescaped content inline.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}

@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Generated Prisma client (npm run db:generate)
+packages/db/src/generated/
+
+# SQLite database files (DATABASE_URL defaults to ./data/dev.db)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Environment (copy .env.example to .env)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/settings.json
