@@ -10,6 +10,7 @@ import {
   tightestWindow,
   type WindowGroup,
 } from "../../lib/accounts";
+import { maskEmails } from "../../lib/mask";
 
 type Status = { key: string; text: string };
 
@@ -67,6 +68,31 @@ function MeterRow({ group, now }: { group: WindowGroup; now: number }) {
   );
 }
 
+/**
+ * The account's label with any email address masked. Clicking it shows the address (rows.ts);
+ * it stays inside the summary, so the click must not fold the row.
+ */
+function AccountLabel({ label }: { label: string }) {
+  const masked = maskEmails(label);
+  if (masked === label) {
+    return (
+      <span class="sub__label" safe>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <button type="button" class="sub__label reveal" data-reveal aria-pressed="false" title="Show email">
+      <span class="reveal__masked" safe>
+        {masked}
+      </span>
+      <span class="reveal__full" hidden safe>
+        {label}
+      </span>
+    </button>
+  );
+}
+
 /** Opens the connect dialog on the reconnect form for this account (a plain page without JS). */
 function ReconnectLink({ account: a }: { account: AccountWithWindows }) {
   const href = `/connect/${a.provider}?account=${a.id}`;
@@ -106,9 +132,7 @@ export function AccountRowContent({ account: a }: { account: AccountWithWindows 
           <span class={`sub__provider provider--${a.provider}`} safe>
             {name}
           </span>
-          <span class="sub__label" safe>
-            {a.label}
-          </span>
+          <AccountLabel label={a.label} />
           {a.plan ? (
             <span class="tag" safe>
               {a.plan}

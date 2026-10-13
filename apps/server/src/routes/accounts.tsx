@@ -2,6 +2,7 @@ import { db } from "@app/db";
 import { Router } from "express";
 import type { Request } from "express";
 import { findAccount, listAccounts, openAccountIds } from "../lib/accounts";
+import { maskEmails } from "../lib/mask";
 import { requestCollect } from "../lib/queue";
 import { AccountRowContent } from "../views/components/account-row";
 import { AccountList } from "../views/pages/dashboard";
@@ -43,7 +44,7 @@ accountsRouter.get("/:id/raw", async (req, res) => {
 accountsRouter.delete("/:id", async (req, res) => {
   const account = await findAccount(req.params.id);
   await db.account.delete({ where: { id: account.id } });
-  res.hx.trigger("toast", { message: `Disconnected ${account.label}.` });
+  res.hx.trigger("toast", { message: `Disconnected ${maskEmails(account.label)}.` });
   // The whole list re-renders so the account count stays right.
   await res.html(await renderList(req));
 });

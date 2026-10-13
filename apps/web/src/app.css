@@ -343,6 +343,22 @@ button.linkish {
   overflow-wrap: anywhere;
 }
 
+/* A masked email: click to show it. Looks like the plain label, with a dotted underline. */
+button.reveal {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 0.2em;
+}
+
+.reveal__masked {
+  letter-spacing: 0.05em;
+}
+
 .sub__who .tag {
   color: var(--muted);
   font-size: var(--step--1);
